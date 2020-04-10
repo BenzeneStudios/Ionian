@@ -13,13 +13,13 @@ public class ModConstructionDevice implements IonianModSetup {
 	private final Logger logger;
 
 	@Override
-	public ModConstructionDevice logInfo(String msg) {
+	public IonianModSetup logInfo(String msg) {
 		logger.info(msg);
 		return this;
 	}
 
 	@Override
-	public ModConstructionDevice logWarn(String msg) {
+	public IonianModSetup logWarn(String msg) {
 		logger.warn(msg);
 		return this;
 	}
