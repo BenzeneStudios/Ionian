@@ -18,7 +18,8 @@
     ]
   },
   "mixins": [
-    "ionianloader.mixins.json"
+    "ionianloader.mixins.json",
+    "ionian.mixins.json"
   ],
 
   "depends": {
