@@ -50,8 +50,10 @@ public class IonianLoader {
 			}
 		}
 
+		// add jars that may not have been loaded by fabric
 		this.loader = new URLClassLoader(yes.toArray(new URL[yes.size()]), this.loader);
 
+		// go through jars and discover mods
 		jars.forEach(f -> {
 			Enumeration<? extends ZipEntry> entries = f.entries();
 
@@ -89,11 +91,12 @@ public class IonianLoader {
 		});
 	}
 
+	// load mods
 	void loadMods(Function<String, IonianModSetup> setup) {
 		this.modMethods.forEach(entry -> {
 			try {
 				Class<?> loadedClass = Class.forName(entry.getLeft());
-				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, setup);
+				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, setup.apply("minecraft"));
 			} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException(e);
 			}
