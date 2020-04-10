@@ -81,11 +81,9 @@ public class IonianLoader {
 		// common output folder names are "target," "out," "bin", however we account for others
 		File workspaceDir = FabricLoader.getInstance().getGameDirectory().getParentFile().getParentFile();
 
-		for (File dir : workspaceDir.listFiles((file, name) -> new File(dir.getPath() + "/" + name).isDirectory() && !name.contains("src") && !name.equals("run") && name.charAt(0) != '.')) {
-			System.out.println(dir);
+		for (File dir : workspaceDir.listFiles((file, name) -> new File(file.getPath() + "/" + name).isDirectory() && !name.contains("src") && !name.equals("run") && name.charAt(0) != '.')) {
 			searchForClassFiles(dir, name -> {
 				try {
-					System.out.println(name);
 					this.tryAddMods(name);
 				} catch (RuntimeException e) {
 					throw new RuntimeException("Failed to add workspace mods from file: " + name + " (dir: " + dir.getName() + ")!", e);
