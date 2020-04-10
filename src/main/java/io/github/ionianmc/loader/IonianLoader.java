@@ -27,7 +27,6 @@ import net.fabricmc.loader.launch.common.FabricLauncherBase;
 public class IonianLoader {
 	IonianLoader() {
 		this.modsDir = ((net.fabricmc.loader.FabricLoader) FabricLoader.getInstance()).getModsDirectory();
-		System.out.println(this.modsDir);
 		this.loader = FabricLauncherBase.getLauncher().getTargetClassLoader();
 		this.modMethods = new ArrayList<>();
 		instance = this;
@@ -67,7 +66,7 @@ public class IonianLoader {
 
 				if (name.endsWith(".class")) { // if it's a class file
 					name = name.replace('/', '.');
-					tryAddMods(name);
+					this.tryAddMods(name);
 				}
 			}
 		});
@@ -82,10 +81,12 @@ public class IonianLoader {
 		// common output folder names are "target," "out," "bin", however we account for others
 		File workspaceDir = FabricLoader.getInstance().getGameDirectory().getParentFile().getParentFile();
 
-		for (File dir : workspaceDir.listFiles((file, name) -> new File(name).isDirectory() && !name.contains("src") && !name.equals("run") && name.charAt(0) != '.')) {
+		for (File dir : workspaceDir.listFiles((file, name) -> new File(dir.getPath() + "/" + name).isDirectory() && !name.contains("src") && !name.equals("run") && name.charAt(0) != '.')) {
+			System.out.println(dir);
 			searchForClassFiles(dir, name -> {
 				try {
-					tryAddMods(name);
+					System.out.println(name);
+					this.tryAddMods(name);
 				} catch (RuntimeException e) {
 					throw new RuntimeException("Failed to add workspace mods from file: " + name + " (dir: " + dir.getName() + ")!", e);
 				}
@@ -111,9 +112,6 @@ public class IonianLoader {
 
 			Method[] methods = declaredClass.getDeclaredMethods();
 
-			if (methods.length == 0) {
-				System.out.println(className);
-			}
 			for (Method m : methods) {
 				m.setAccessible(true);
 
