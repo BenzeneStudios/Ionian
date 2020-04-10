@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.mixin.transformer.throwables.IllegalClassLoadError;
 
 import io.github.ionianmc.loader.api.IonianModSetup;
 import net.fabricmc.loader.api.FabricLoader;
@@ -145,6 +146,8 @@ public class IonianLoader {
 			}
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
+		} catch (IllegalClassLoadError e) {
+			return; // don't load mixin classes!
 		}
 	}
 
