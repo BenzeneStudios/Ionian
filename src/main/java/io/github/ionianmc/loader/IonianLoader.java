@@ -103,7 +103,7 @@ public class IonianLoader {
 							LOGGER.warn("Could not find end index of package declaration in a source file!" + file.getPath() + "");
 						} else {
 							String fn = file.getName(); // get file name
-							String className = source.substring(packageIndex, endPackageIndex) + "." + fn.substring(0, fn.length() - 5 /* ".java".length() */).trim();
+							String className = source.substring(packageIndex, endPackageIndex).trim() + "." + fn.substring(0, fn.length() - 5 /* ".java".length() */);
 							this.tryAddMods(className);
 						}
 					}
