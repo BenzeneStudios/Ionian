@@ -14,11 +14,11 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.github.ionianmc.ionian.IonianLaunch"
+      "io.github.ionianmc.loader.IonianLaunch"
     ]
   },
   "mixins": [
-    "ionian.mixins.json"
+    "ionianloader.mixins.json"
   ],
 
   "depends": {
