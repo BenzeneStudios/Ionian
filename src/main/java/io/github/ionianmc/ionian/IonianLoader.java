@@ -96,7 +96,8 @@ public class IonianLoader {
 		this.modMethods.forEach(entry -> {
 			try {
 				Class<?> loadedClass = Class.forName(entry.getLeft());
-				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, setup.apply("minecraft"));
+				String modId = modId(entry.getLeft());
+				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, setup.apply(modId));
 			} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException(e);
 			}
@@ -105,6 +106,51 @@ public class IonianLoader {
 
 	public void addMethod(String clazz, String method) {
 		this.modMethods.add(Pair.of(clazz, method));
+	}
+
+	private static String modId(String className) {
+		String[] parts = className.split("\\.");
+		StringBuilder sb = new StringBuilder();
+
+		// create mod_id_like_this from something like my.package.mod.ModInit
+		for (char c : parts[parts.length - 1].toCharArray()) {
+			if (Character.isUpperCase(c)) {
+				if (!sb.toString().isEmpty()) {
+					sb.append("_");
+				}
+
+				sb.append(Character.toLowerCase(c));
+			} else {
+				sb.append(c);
+			}
+		}
+
+		String pseudoResult = sb.toString();
+
+		// now remove the words "init" or "main" or similar if they have that in the name
+		sb = new StringBuilder();
+		boolean flag = false;
+
+		for (String sub : pseudoResult.split("_")) {
+			if (!sub.contains("init") && !sub.contains("main")) {
+				if (flag) {
+					sb.append("_");
+				}
+				sb.append(sub);
+
+				flag = true;
+			}
+		}
+
+		String result = sb.toString();
+
+		if (!result.isEmpty()) {
+			return result;
+		} else if (!pseudoResult.isEmpty()) {
+			return pseudoResult;
+		} else {
+			throw new RuntimeException("IonianMC could not construct a valid mod id from class name: " + className + "!");
+		}
 	}
 
 	public static IonianLoader getInstance() {
