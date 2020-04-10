@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -66,6 +67,7 @@ public class IonianLoader {
 
 				if (name.endsWith(".class")) { // if it's a class file
 					name = name.replace('/', '.');
+					name = name.substring(0, name.length() - 6);
 					this.tryAddMods(name);
 				}
 			}
@@ -77,34 +79,52 @@ public class IonianLoader {
 		}
 	}
 
+	private static final int SIZEOF_PACKAGE = "package".length();
+
 	private void boostrapDev() {
-		// common output folder names are "target," "out," "bin", however we account for others
 		File workspaceDir = FabricLoader.getInstance().getGameDirectory().getParentFile().getParentFile();
 
-		for (File dir : workspaceDir.listFiles((file, name) -> new File(file.getPath() + "/" + name).isDirectory() && !name.contains("src") && !name.equals("run") && name.charAt(0) != '.')) {
-			searchForClassFiles(dir, name -> {
+		// looking in src for package names is cursed as...
+		// but it's better than java.lang.ClassNotFoundException: main.io.github.ionianmc.loader.api.IonianModSetup
+		for (File dir : workspaceDir.listFiles((file, name) -> new File(file.getPath() + "/" + name).isDirectory() && name.contains("src"))) {
+			searchForFiles(dir, file -> {
 				try {
-					this.tryAddMods(name);
-				} catch (RuntimeException e) {
-					throw new RuntimeException("Failed to add workspace mods from file: " + name + " (dir: " + dir.getName() + ")!", e);
+					String source = new String(Files.readAllBytes(file.toPath()));
+					// try get package decl
+					int packageIndex = source.indexOf("package");
+
+					if (packageIndex == -1) {
+						LOGGER.warn("Could not find index of package declaration in a source file!" + file.getPath() + " Perhaps you are using the root package?");
+					} else {
+						packageIndex += SIZEOF_PACKAGE;
+						int endPackageIndex = source.indexOf(';', packageIndex);
+
+						if (endPackageIndex == -1) {
+							LOGGER.warn("Could not find end index of package declaration in a source file!" + file.getPath() + "");
+						} else {
+							String fn = file.getName(); // get file name
+							String className = source.substring(packageIndex, endPackageIndex) + "." + fn.substring(0, fn.length() - 5 /* ".java".length() */).trim();
+							this.tryAddMods(className);
+						}
+					}
+				} catch (RuntimeException | IOException e) {
+					throw new RuntimeException("Failed to add workspace mods from file: " + file.getPath() + " (dir: " + dir.getName() + ")!", e);
 				}
-			}, "");
+			}, ".java");
 		}
 	}
 
-	private static void searchForClassFiles(File dir, Consumer<String> callback, String prefix) {
-		for (File sub : dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(".class"))) {
+	private static void searchForFiles(File dir, Consumer<File> callback, String extension) {
+		for (File sub : dir.listFiles(file -> file.isDirectory() || file.getName().endsWith(extension))) {
 			if (sub.isDirectory()) {
-				searchForClassFiles(sub, callback, prefix + sub.getName() + ".");
+				searchForFiles(sub, callback, extension);
 			} else {
-				callback.accept(prefix + sub.getName());
+				callback.accept(sub);
 			}
 		}
 	}
 
 	private void tryAddMods(String className) {
-		className = className.substring(0, className.length() - 6);
-
 		try {
 			Class<?> declaredClass = Class.forName(className, false, this.loader);
 
