@@ -48,5 +48,6 @@ public class ModConstructionDevice implements IonianModSetup {
 	public void setupItems() {
 		this.itemSetups.forEach(setup -> setup.accept(this.registrySetup.item()));
 		this.registrySetup.item().flush();
+		this.registrySetup.item().addLangKeys();
 	}
 }

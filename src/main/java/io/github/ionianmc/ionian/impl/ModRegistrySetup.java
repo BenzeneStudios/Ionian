@@ -26,11 +26,13 @@ public class ModRegistrySetup {
 		this.identifiers = name -> name.contains(":") ? new Identifier(name) : new Identifier(modid, name);
 		this.logger = logger;
 		this.item = new Item();
+		this.modid = modid;
 	}
 
 	private final Function<String, Identifier> identifiers;
 	private final Logger logger;
 	private final Item item;
+	private final String modid;
 
 	public Item item() {
 		return this.item;
@@ -87,6 +89,10 @@ public class ModRegistrySetup {
 			this.dirty = false;
 		}
 
+		public void addLangKeys() {
+			this.language.forEach((language, map) -> RuntimeResourcePack.INSTANCE.addLangFile(modid, language, map));
+		}
+
 		@Override
 		public InitialisedItemSetup newItem(String registryName) {
 			if (this.dirty) {
@@ -95,6 +101,7 @@ public class ModRegistrySetup {
 
 			this.dirty = true;
 			this.currentItem = new ItemBuilder(this.currentId = identifiers.apply(registryName));
+			System.out.println(this.currentId);
 			this.localisedName = generatedLangValue(this.currentId);
 			this.langKey = langKey("item", this.currentId);
 			return this;
@@ -203,7 +210,7 @@ public class ModRegistrySetup {
 
 		@Override
 		public ItemModelSetup overrideTexture(Identifier newTexture) {
-			this.texture = buildResourceLocation(this.type, newTexture.toString().split(":"));
+			this.texture = buildResourceLocation(this.type, newTexture.getNamespace(), newTexture.getPath());
 			return this;
 		}
 	}
@@ -276,23 +283,20 @@ public class ModRegistrySetup {
 		}
 	}
 
-	static String buildResourceLocation(String type, String[] id) {
-		String namespace = id[0];
-
+	static String buildResourceLocation(String type, String namespace, String path) {
 		if (namespace.equals("minecraft")) {
-			return type + "/" + id[1];
+			return type + "/" + path;
 		} else {
-			return namespace + ":" + type + "/" + id[1];
+			return namespace + ":" + type + "/" + path;
 		}
 	}
 
 	static String langKey(String type, Identifier id) {
-		String[] sid = id.getPath().split(":");
-		return type + "." + sid[0] + "." + sid[1];
+		return type + "." + id.getNamespace() + "." + id.getPath();
 	}
 
 	static String generatedLangValue(Identifier id) {
-		String idName = id.getPath().split(":")[1];
+		String idName = id.getPath();
 
 		StringBuilder sb = new StringBuilder();
 		boolean capital = true;
