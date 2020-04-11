@@ -101,7 +101,6 @@ public class ModRegistrySetup {
 
 			this.dirty = true;
 			this.currentItem = new ItemBuilder(this.currentId = identifiers.apply(registryName));
-			System.out.println(this.currentId);
 			this.localisedName = generatedLangValue(this.currentId);
 			this.langKey = langKey("item", this.currentId);
 			return this;
