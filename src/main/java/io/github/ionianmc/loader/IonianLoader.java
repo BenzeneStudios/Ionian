@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.transformer.throwables.IllegalClassLoadError;
 
 import io.github.ionianmc.loader.api.IonianModSetup;
+import io.github.ionianmc.loader.impl.ModConstructionDevice;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.launch.common.FabricLauncherBase;
 
@@ -37,6 +38,7 @@ public class IonianLoader {
 	private final File modsDir;
 	private ClassLoader loader;
 	private final List<Pair<String, String>> modMethods;
+	private final List<ModConstructionDevice> mods = new ArrayList<>();
 
 	void discoverMods() {
 		List<ZipFile> jars = new ArrayList<>();
@@ -151,17 +153,26 @@ public class IonianLoader {
 		}
 	}
 
-	// load mods
-	void loadMods(Function<String, IonianModSetup> setup) {
+	// setup mods
+	void setupMods(Function<String, ModConstructionDevice> setup) {
 		this.modMethods.forEach(entry -> {
 			try {
 				Class<?> loadedClass = Class.forName(entry.getLeft());
 				String modId = modId(entry.getLeft());
-				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, setup.apply(modId));
+
+				// create mod construction device and add mod
+				ModConstructionDevice mod = setup.apply(modId);
+				this.mods.add(mod);
+
+				loadedClass.getDeclaredMethod(entry.getRight(), IonianModSetup.class).invoke(null, mod);
 			} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
 				throw new RuntimeException(e);
 			}
 		});
+	}
+
+	void registerModContent() {
+		this.mods.forEach(mod -> mod.setupItems());
 	}
 
 	private void addMethod(String clazz, String method) {

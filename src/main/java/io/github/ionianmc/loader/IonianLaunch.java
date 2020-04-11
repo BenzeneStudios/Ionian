@@ -15,6 +15,7 @@ public class IonianLaunch implements ModInitializer {
 
 	public static void loadMods() {
 		IonianLoader.LOGGER.info("Loading discovered mods.");
-		loader.loadMods(ModConstructionDevice::new);
+		loader.setupMods(ModConstructionDevice::new);
+		loader.registerModContent();
 	}
 }

@@ -1,5 +1,7 @@
 package io.github.ionianmc.loader.impl;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +19,7 @@ public class ModConstructionDevice implements IonianModSetup {
 
 	private final Logger logger;
 	private final ModRegistrySetup registrySetup;
+	private final List<Consumer<ItemSetup<?>>> itemSetups = new ArrayList<>();
 
 	@Override
 	public IonianModSetup logInfo(String msg) {
@@ -38,7 +41,12 @@ public class ModConstructionDevice implements IonianModSetup {
 
 	@Override
 	public IonianModSetup itemSetup(Consumer<ItemSetup<?>> setup) {
-		setup.accept(this.registrySetup.item());
+		this.itemSetups.add(setup);
 		return this;
+	}
+
+	public void setupItems() {
+		this.itemSetups.forEach(setup -> setup.accept(this.registrySetup.item()));
+		this.registrySetup.item().flush();
 	}
 }
