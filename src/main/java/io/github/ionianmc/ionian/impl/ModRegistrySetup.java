@@ -1,7 +1,10 @@
 package io.github.ionianmc.ionian.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -40,7 +43,10 @@ public class ModRegistrySetup {
 		private ItemBuilder currentItem;
 		private Identifier currentId;
 		private ItemModel currentModel;
+		private String localisedName;
+		private String langKey;
 		private boolean dirty = false;
+		private final Map<String, Map<String, String>> language = new HashMap<>();
 
 		@Override
 		public InitialisedItemSetup logInfo(String msg) {
@@ -69,7 +75,9 @@ public class ModRegistrySetup {
 
 					if (itemModelJson != null) {
 						RuntimeResourcePack.INSTANCE.addItemModel(this.currentId, itemModelJson);
+						this.getLanguage("en_us").put(this.langKey, this.localisedName);
 					}
+
 					this.currentModel = null;
 				}
 
@@ -87,6 +95,8 @@ public class ModRegistrySetup {
 
 			this.dirty = true;
 			this.currentItem = new ItemBuilder(this.currentId = identifiers.apply(registryName));
+			this.localisedName = generatedLangValue(this.currentId);
+			this.langKey = langKey("item", this.currentId);
 			return this;
 		}
 
@@ -138,6 +148,22 @@ public class ModRegistrySetup {
 			modelSetup.accept(model);
 			this.currentModel = model;
 			return this;
+		}
+
+		@Override
+		public InitialisedItemSetup localisedName(String language, String name) {
+			language = language.toLowerCase(Locale.ROOT);
+
+			if (language.equals("en_us")) {
+				this.localisedName = name;
+			} else {
+				this.getLanguage(language).put(this.langKey, name);
+			}
+			return this;
+		}
+
+		private Map<String, String> getLanguage(String language) {
+			return this.language.computeIfAbsent(language, lang -> new HashMap<>());
 		}
 	}
 
@@ -258,5 +284,31 @@ public class ModRegistrySetup {
 		} else {
 			return namespace + ":" + type + "/" + id[1];
 		}
+	}
+
+	static String langKey(String type, Identifier id) {
+		String[] sid = id.getPath().split(":");
+		return type + "." + sid[0] + "." + sid[1];
+	}
+
+	static String generatedLangValue(Identifier id) {
+		String idName = id.getPath().split(":")[1];
+
+		StringBuilder sb = new StringBuilder();
+		boolean capital = true;
+
+		for (char c : idName.toCharArray()) {
+			if (c == '_') {
+				sb.append(" ");
+				capital = true;
+			} else if (capital) {
+				sb.append(Character.toUpperCase(c));
+				capital = false;
+			} else {
+				sb.append(c);
+			}
+		}
+
+		return sb.toString();
 	}
 }
