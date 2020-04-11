@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.github.ionianmc.ionian.api.ItemSetup;
+import io.github.ionianmc.ionian.api.item.ItemSetup;
 import io.github.ionianmc.ionian.impl.ModRegistrySetup;
 import io.github.ionianmc.loader.api.IonianModSetup;
 
@@ -37,8 +37,8 @@ public class ModConstructionDevice implements IonianModSetup {
 	}
 
 	@Override
-	public IonianModSetup itemSetup(Consumer<ItemSetup> setup) {
-		setup.accept(this.registrySetup);
+	public IonianModSetup itemSetup(Consumer<ItemSetup<?>> setup) {
+		setup.accept(this.registrySetup.item());
 		return this;
 	}
 }
