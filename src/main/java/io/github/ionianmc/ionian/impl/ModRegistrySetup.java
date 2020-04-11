@@ -12,6 +12,7 @@ import io.github.ionianmc.ionian.api.item.FoodSetup;
 import io.github.ionianmc.ionian.api.item.InitialisedItemSetup;
 import io.github.ionianmc.ionian.api.item.ItemModelSetup;
 import io.github.ionianmc.ionian.impl.extensions.ItemBuilder;
+import net.devtech.rrp.api.RuntimeResourcePack;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.FoodComponent;
 import net.minecraft.item.ItemGroup;
@@ -38,6 +39,8 @@ public class ModRegistrySetup {
 
 		private ItemBuilder currentItem;
 		private Identifier currentId;
+		private ItemModel currentModel;
+		private boolean dirty = false;
 
 		@Override
 		public InitialisedItemSetup logInfo(String msg) {
@@ -57,12 +60,32 @@ public class ModRegistrySetup {
 			return this;
 		}
 
-		@Override
-		public InitialisedItemSetup newItem(String registryName) {
+		public void flush() {
 			if (this.currentItem != null) {
 				this.currentItem.build(net.minecraft.item.Item::new);
+
+				if (this.currentModel != null) {
+					String itemModelJson = JsonModels.constructItemModel(this.currentModel);
+
+					if (itemModelJson != null) {
+						RuntimeResourcePack.INSTANCE.addItemModel(this.currentId, itemModelJson);
+					}
+					this.currentModel = null;
+				}
+
+				this.currentItem = null;
 			}
 
+			this.dirty = false;
+		}
+
+		@Override
+		public InitialisedItemSetup newItem(String registryName) {
+			if (this.dirty) {
+				this.flush();
+			}
+
+			this.dirty = true;
 			this.currentItem = new ItemBuilder(this.currentId = identifiers.apply(registryName));
 			return this;
 		}
@@ -113,18 +136,20 @@ public class ModRegistrySetup {
 		public InitialisedItemSetup model(Consumer<ItemModelSetup> modelSetup) {
 			ItemModel model = new ItemModel(this.currentId, "item");
 			modelSetup.accept(model);
+			this.currentModel = model;
 			return this;
 		}
 	}
 
 	public class ItemModel implements ItemModelSetup {
 		private ItemModel(Identifier id, String type) {
-			String namespace = id.getNamespace();
-			this.texture = buildResourceLocation(type, id.toString().split(":"));
+			this.type = type;
+			this.overrideTexture(id);
 		}
 
-		private ModelType modelType;
-		private String texture;
+		ModelType modelType;
+		String texture;
+		final String type;
 
 		@Override
 		public ItemModelSetup logInfo(String msg) {
@@ -151,9 +176,9 @@ public class ModRegistrySetup {
 		}
 
 		@Override
-		public ItemModelSetup overrideTexture(String newTexture) {
-			// TODO Auto-generated method stub
-			return null;
+		public ItemModelSetup overrideTexture(Identifier newTexture) {
+			this.texture = buildResourceLocation(this.type, newTexture.toString().split(":"));
+			return this;
 		}
 	}
 
@@ -222,6 +247,16 @@ public class ModRegistrySetup {
 			statusEffectSetup.accept(se);
 			this.statusEffects.add(se.build());
 			return this;
+		}
+	}
+
+	static String buildResourceLocation(String type, String[] id) {
+		String namespace = id[0];
+
+		if (namespace.equals("minecraft")) {
+			return type + "/" + id[1];
+		} else {
+			return namespace + ":" + type + "/" + id[1];
 		}
 	}
 }
