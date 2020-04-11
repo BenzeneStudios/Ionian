@@ -1,5 +1,7 @@
 package io.github.ionianmc.ionian.api;
 
-public interface ItemSetup {
+import io.github.ionianmc.loader.api.Logger;
+
+public interface ItemSetup extends Logger<ItemSetup> {
 	
 }

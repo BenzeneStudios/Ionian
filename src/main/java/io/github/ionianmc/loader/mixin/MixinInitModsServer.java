@@ -8,7 +8,7 @@ import io.github.ionianmc.loader.IonianLaunch;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 
 @Mixin(MinecraftDedicatedServer.class)
-public class MixinLoadModsServer {
+public class MixinInitModsServer {
 	@Inject(at = @At(value = "INVOKE", target = "Lorg/apache/logging/log4j/Logger;info(Ljava/lang/String;)V", ordinal = 0), method = "setupServer")
 	private void loadModsServer() {
 		IonianLaunch.loadMods();

@@ -10,7 +10,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import io.github.ionianmc.loader.IonianLaunch;
 
 @Mixin(remap = false, value = RenderSystem.class)
-public class MixinLoadModsClient {
+public class MixinInitModsClient {
 	@Inject(at = @At("HEAD"), method = "setupDefaultState", cancellable = true)
 	private static void loadModsClient(int x, int y, int width, int height, CallbackInfo info) {
 		IonianLaunch.loadMods();
